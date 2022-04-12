@@ -26,8 +26,8 @@
  */
 
 // If this file is called directly, abort.
-if ( ! defined( 'WPINC' ) ) {
-	die;
+if (!defined('WPINC')) {
+    die;
 }
 
 /**
@@ -35,15 +35,15 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'PRODUCTION_MANAGER', '1.0.0' );
+define('PRODUCTION_MANAGER', '1.0.0');
 
 /**
  * The code that runs during plugin activation.
  * This action is documented in includes/class-production-manager-activator.php
  */
 function activate_production_manager() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-production-manager-activator.php';
-	Production_Manager_Activator::activate();
+    require_once plugin_dir_path(__FILE__) . 'includes/class-production-manager-activator.php';
+    Production_Manager_Activator::activate();
 }
 
 /**
@@ -51,18 +51,18 @@ function activate_production_manager() {
  * This action is documented in includes/class-production-manager-deactivator.php
  */
 function deactivate_production_manager() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-production-manager-deactivator.php';
-	Production_Manager_Deactivator::deactivate();
+    require_once plugin_dir_path(__FILE__) . 'includes/class-production-manager-deactivator.php';
+    Production_Manager_Deactivator::deactivate();
 }
 
-register_activation_hook( __FILE__, 'activate_production_manager' );
-register_deactivation_hook( __FILE__, 'deactivate_production_manager' );
+register_activation_hook(__FILE__, 'activate_production_manager');
+register_deactivation_hook(__FILE__, 'deactivate_production_manager');
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-production-manager.php';
+require plugin_dir_path(__FILE__) . 'includes/class-production-manager.php';
 
 /**
  * Begins execution of the plugin.
@@ -75,8 +75,9 @@ require plugin_dir_path( __FILE__ ) . 'includes/class-production-manager.php';
  */
 function run_production_manager() {
 
-	$plugin = new Production_Manager();
-	$plugin->run();
+    $plugin = new Production_Manager();
+    $plugin->run();
 
 }
+
 run_production_manager();
