@@ -76,6 +76,7 @@ class Production_Manager {
 
 		$this->load_dependencies();
 		$this->set_locale();
+        $this->define_common_hooks();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 
@@ -143,7 +144,17 @@ class Production_Manager {
 
 	}
 
-	/**
+    /**
+     * Register common hooks here.
+     *
+     * @since    1.0.0
+     * @access   private
+     */
+    private function define_common_hooks() {
+        $this->loader->add_action( 'init', $this, 'register_custom_post_types', 11 );
+    }
+
+    /**
 	 * Register all of the hooks related to the admin area functionality
 	 * of the plugin.
 	 *
@@ -156,6 +167,11 @@ class Production_Manager {
 
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_styles' );
 		$this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
+
+        $this->loader->add_filter( 'manage_posts_columns', $plugin_admin, 'add_column_head');
+        $this->loader->add_action('manage_posts_custom_column', $plugin_admin, 'add_column_content', 10, 2);
+        $this->loader->add_filter( 'acf/load_field/name=pm_coupon_code', $plugin_admin, 'read_only_field');
+        $this->loader->add_filter( 'acf/update_value/name=pm_coupon_code', $plugin_admin, 'handle_coupon_code');
 
 	}
 
@@ -174,6 +190,48 @@ class Production_Manager {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
 
 	}
+
+    public function register_custom_post_types() {
+        $labels = array(
+            'name'               => _x( 'Production Orders', 'post type general name', 'wp-production-manager' ),
+            'singular_name'      => _x( 'Production Order', 'post type singular name', 'wp-production-manager' ),
+            'menu_name'          => _x( 'Production Orders', 'admin menu', 'wp-production-manager' ),
+            'name_admin_bar'     => _x( 'Production Order', 'add new on admin bar', 'wp-production-manager' ),
+            'add_new'            => _x( 'Add New', 'order', 'wp-production-manager' ),
+            'add_new_item'       => __( 'Add New Order', 'wp-production-manager' ),
+            'new_item'           => __( 'New Order', 'wp-production-manager' ),
+            'edit_item'          => __( 'Edit Order', 'wp-production-manager' ),
+            'view_item'          => __( 'View Order', 'wp-production-manager' ),
+            'all_items'          => __( 'All Orders', 'wp-production-manager' ),
+            'search_items'       => __( 'Search Orders', 'wp-production-manager' ),
+            'parent_item_colon'  => __( 'Parent Order:', 'wp-production-manager' ),
+            'not_found'          => __( 'No orders found.', 'wp-production-manager' ),
+            'not_found_in_trash' => __( 'No orders found in Trash.', 'wp-production-manager' ),
+        );
+
+        $args = array(
+            'labels'                => $labels,
+            'description'           => __( 'Production Order', 'wp-production-order' ),
+            'public'                => true,
+            'publicly_queryable'    => true,
+            'show_in_nav_menus'     => true,
+            'show_ui'               => true,
+            'show_in_menu'          => true,
+            'query_var'             => true,
+            'has_archive'           => true,
+            'hierarchical'          => false,
+            'rewrite'               => array( 'slug' => 'pm_production_order' ),
+            'supports'              => array( 'title', 'editor', 'thumbnail', 'custom-fields'),
+            'can_export'            => true,
+            'capability_type'       => 'post',
+            'menu_position'         => 22,
+            'menu_icon'             => 'dashicons-admin-generic',
+            'rest_base'             => 'pm_production_order',
+            'rest_controller_class' => 'WP_REST_Posts_Controller',
+        );
+
+        register_post_type( 'pm_production_order', $args );
+    }
 
 	/**
 	 * Run the loader to execute all of the hooks with WordPress.
