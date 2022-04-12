@@ -45,13 +45,46 @@ class Production_Manager_Admin {
      *
      * @param string $plugin_name The name of this plugin.
      * @param string $version The version of this plugin.
+     *
      * @since    1.0.0
      */
     public function __construct($plugin_name, $version) {
 
         $this->plugin_name = $plugin_name;
-        $this->version = $version;
+        $this->version     = $version;
 
+    }
+
+    /**
+     * Add Production Manager settings page
+     *
+     * @author Samuel Bohl
+     * @since 1.0.0
+     */
+    public function add_pm_settings_page() {
+        if (function_exists('acf_add_options_page')) {
+            acf_add_options_page(array(
+                'page_title' => 'Production Manager Settings',
+                'menu_title' => 'PM Settings',
+                'menu_slug'  => 'production-manager-settings',
+                'capability' => 'edit_posts',
+                'redirect'   => false
+            ));
+        }
+    }
+
+    /**
+     * Save settings as options on acf/save.
+     *
+     * @author Samuel Bohl
+     * @since 1.0.0
+     */
+    public function save_settings($post_id) {
+        $values = get_field($post_id);
+
+        if (! update_option('pm_settings_allowed_users', $values['production_manager_users'])) {
+            add_option('pm_settings_allowed_users', $values['production_manager_users']);
+        }
     }
 
     /**
@@ -62,6 +95,7 @@ class Production_Manager_Admin {
      */
     public function read_only_field($field) {
         $field['disabled'] = '1';
+
         return $field;
     }
 
@@ -72,8 +106,9 @@ class Production_Manager_Admin {
      * @since 1.0.0
      */
     public function add_column_head($columns) {
-        $columns['pm_status'] = 'Status';
+        $columns['pm_status']      = 'Status';
         $columns['pm_coupon_code'] = 'Coupon Code';
+
         return $columns;
     }
 
@@ -94,7 +129,7 @@ class Production_Manager_Admin {
         } else if ($column_name == 'pm_coupon_code') {
             $post_coupon_code = get_field('pm_coupon_code', $post_id);
             if ($post_coupon_code) {
-                echo $post_coupon_code;
+                echo get_post($post_coupon_code)->post_name;
             } else {
                 echo 'not FOUND';
             }
@@ -108,24 +143,28 @@ class Production_Manager_Admin {
      * @author Samuel Bohl
      * @since 1.0.0
      */
-    public function handle_coupon_code($value, $post_id, $field, $original) {
-        $current_code = get_field('pm_coupon_code', $post_id);
-
-        // if coupon code is already in the field
+    public function handle_coupon_code($value, $post_id, $field) {
         if ($value) {
             return $value;
         }
 
-        // check if code is already in the database
-        $current_code = get_field('pm_coupon_code', $post_id);
-        if ($current_code) {
-            return $current_code;
-        }
+        // otherwise, generate coupon code and add it to this field and woocommerce
+        $new_code = $this->generate_random_coupon_code();
+        update_field('pm_coupon_code', $new_code, $post_id);
 
-        // generate code
-        $new_code = generate_random_coupon_code();
-        $args = array();
-        return add_coupon_code($new_code, $args);
+        $allowed_users = get_option('pm_settings_allowed_users');
+        $args          = array(
+            'discount_type'        => 'percent',
+            'coupon_amount'        => '100',
+            'individual_use'       => 'no',
+            'usage_limit'          => '1',
+            'usage_limit_per_user' => '1',
+            'wc_sc_user_role_ids'  => json_encode($allowed_users)
+        );
+
+        $new_coupon_id = $this->add_coupon_code($new_code, $args);
+        update_field('pm_coupon_code', $new_coupon_id, $post_id); // TODO duplicate bug
+        return $new_coupon_id;
     }
 
     /**
@@ -136,6 +175,7 @@ class Production_Manager_Admin {
      */
     private function generate_random_coupon_code() {
         $characters = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
         return substr(str_shuffle($characters), 0, 8);
     }
 
@@ -147,16 +187,16 @@ class Production_Manager_Admin {
      */
     private function add_coupon_code($coupon_code, $args = array()) {
         $coupon_args = array(
-            'post_title' => $coupon_code,
+            'post_title'   => $coupon_code,
             'post_content' => '',
-            'post_status' => 'publish',
-            'post_author' => 1,
-            'post_type' => 'shop_coupon'
+            'post_status'  => 'publish',
+            'post_author'  => 1,
+            'post_type'    => 'shop_coupon'
         );
 
         $coupon_id = wp_insert_post($coupon_args);
 
-        if (!empty($coupon_id) && !is_wp_error($coupon_id)) {
+        if (! empty($coupon_id) && ! is_wp_error($coupon_id)) {
             foreach ($args as $key => $val) {
                 update_post_meta($coupon_id, $key, $val);
             }

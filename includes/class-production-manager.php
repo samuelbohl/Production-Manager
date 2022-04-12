@@ -164,15 +164,17 @@ class Production_Manager {
     private function define_admin_hooks() {
 
         $plugin_admin = new Production_Manager_Admin($this->get_plugin_name(), $this->get_version());
+        $this->loader->add_action('init', $plugin_admin, 'add_pm_settings_page');
 
         $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
         $this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
 
         $this->loader->add_filter('manage_posts_columns', $plugin_admin, 'add_column_head');
         $this->loader->add_action('manage_posts_custom_column', $plugin_admin, 'add_column_content', 10, 2);
-        $this->loader->add_filter('acf/load_field/name=pm_coupon_code', $plugin_admin, 'read_only_field');
-        $this->loader->add_filter('acf/update_value/name=pm_coupon_code', $plugin_admin, 'handle_coupon_code');
 
+        $this->loader->add_action('acf/save_post', $plugin_admin, 'save_settings');
+        $this->loader->add_filter('acf/load_field/name=pm_coupon_code', $plugin_admin, 'read_only_field');
+        $this->loader->add_filter('acf/load_value/name=pm_coupon_code', $plugin_admin, 'handle_coupon_code', 10, 3);
     }
 
     /**
