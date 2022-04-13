@@ -174,7 +174,7 @@ class Production_Manager {
 
         $this->loader->add_action('acf/save_post', $plugin_admin, 'save_settings');
         $this->loader->add_filter('acf/load_field/name=pm_coupon_code', $plugin_admin, 'read_only_field');
-        $this->loader->add_filter('acf/load_value/name=pm_coupon_code', $plugin_admin, 'handle_coupon_code', 10, 3);
+        $this->loader->add_action('acf/save_post', $plugin_admin, 'handle_coupon_code');
     }
 
     /**

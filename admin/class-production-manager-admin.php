@@ -143,15 +143,14 @@ class Production_Manager_Admin {
      * @author Samuel Bohl
      * @since 1.0.0
      */
-    public function handle_coupon_code($value, $post_id, $field) {
-        if ($value) {
-            return $value;
+    public function handle_coupon_code($post_id) {
+        $post_type = get_post_type($post_id);
+        if ($post_type != 'pm_production_order') {
+            return;
         }
 
-        // otherwise, generate coupon code and add it to this field and woocommerce
+        // otherwise, generate coupon code
         $new_code = $this->generate_random_coupon_code();
-        update_field('pm_coupon_code', $new_code, $post_id);
-
         $allowed_users = get_option('pm_settings_allowed_users');
         $args          = array(
             'discount_type'        => 'percent',
@@ -162,9 +161,9 @@ class Production_Manager_Admin {
             'wc_sc_user_role_ids'  => json_encode($allowed_users)
         );
 
+        //add it to this field and woocommerce
         $new_coupon_id = $this->add_coupon_code($new_code, $args);
-        update_field('pm_coupon_code', $new_coupon_id, $post_id); // TODO duplicate bug
-        return $new_coupon_id;
+        update_field('pm_coupon_code', $new_coupon_id, $post_id);
     }
 
     /**
