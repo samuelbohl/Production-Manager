@@ -80,10 +80,14 @@ class Production_Manager_Admin {
      * @since 1.0.0
      */
     public function save_settings($post_id) {
-        $values = get_field($post_id);
+        $screen = get_current_screen();
 
-        if (! update_option('pm_settings_allowed_users', $values['production_manager_users'])) {
-            add_option('pm_settings_allowed_users', $values['production_manager_users']);
+        if (strpos($screen->id, "production-manager-settings") == true) {
+            $values = get_fields($post_id);
+
+            if (! update_option('pm_settings_allowed_users', $values['production_manager_users'])) {
+                add_option('pm_settings_allowed_users', $values['production_manager_users']);
+            }
         }
     }
 
@@ -150,7 +154,7 @@ class Production_Manager_Admin {
         }
 
         // otherwise, generate coupon code
-        $new_code = $this->generate_random_coupon_code();
+        $new_code      = $this->generate_random_coupon_code();
         $allowed_users = get_option('pm_settings_allowed_users');
         $args          = array(
             'discount_type'        => 'percent',
@@ -158,7 +162,7 @@ class Production_Manager_Admin {
             'individual_use'       => 'no',
             'usage_limit'          => '1',
             'usage_limit_per_user' => '1',
-            'wc_sc_user_role_ids'  => json_encode($allowed_users)
+            'pm_restrict_users'    => 'true'
         );
 
         //add it to this field and woocommerce
@@ -197,7 +201,9 @@ class Production_Manager_Admin {
 
         if (! empty($coupon_id) && ! is_wp_error($coupon_id)) {
             foreach ($args as $key => $val) {
-                update_post_meta($coupon_id, $key, $val);
+                if (! update_post_meta($coupon_id, $key, $val)) {
+                    add_post_meta($coupon_id, $key, $val);
+                }
             }
         }
 

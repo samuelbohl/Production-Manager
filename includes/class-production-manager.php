@@ -152,6 +152,7 @@ class Production_Manager {
      */
     private function define_common_hooks() {
         $this->loader->add_action('init', $this, 'register_custom_post_types', 11);
+        $this->loader->add_filter('woocommerce_coupon_is_valid', $this, 'filter_woocommerce_coupon_is_valid', 10, 2);
     }
 
     /**
@@ -201,44 +202,60 @@ class Production_Manager {
      */
     public function register_custom_post_types() {
         $labels = array(
-            'name' => _x('Production Orders', 'post type general name', 'wp-production-manager'),
-            'singular_name' => _x('Production Order', 'post type singular name', 'wp-production-manager'),
-            'menu_name' => _x('Production Orders', 'admin menu', 'wp-production-manager'),
-            'name_admin_bar' => _x('Production Order', 'add new on admin bar', 'wp-production-manager'),
-            'add_new' => _x('Add New', 'order', 'wp-production-manager'),
-            'add_new_item' => __('Add New Order', 'wp-production-manager'),
-            'new_item' => __('New Order', 'wp-production-manager'),
-            'edit_item' => __('Edit Order', 'wp-production-manager'),
-            'view_item' => __('View Order', 'wp-production-manager'),
-            'all_items' => __('All Orders', 'wp-production-manager'),
-            'search_items' => __('Search Orders', 'wp-production-manager'),
-            'parent_item_colon' => __('Parent Order:', 'wp-production-manager'),
-            'not_found' => __('No orders found.', 'wp-production-manager'),
+            'name'               => _x('Production Orders', 'post type general name', 'wp-production-manager'),
+            'singular_name'      => _x('Production Order', 'post type singular name', 'wp-production-manager'),
+            'menu_name'          => _x('Production Orders', 'admin menu', 'wp-production-manager'),
+            'name_admin_bar'     => _x('Production Order', 'add new on admin bar', 'wp-production-manager'),
+            'add_new'            => _x('Add New', 'order', 'wp-production-manager'),
+            'add_new_item'       => __('Add New Order', 'wp-production-manager'),
+            'new_item'           => __('New Order', 'wp-production-manager'),
+            'edit_item'          => __('Edit Order', 'wp-production-manager'),
+            'view_item'          => __('View Order', 'wp-production-manager'),
+            'all_items'          => __('All Orders', 'wp-production-manager'),
+            'search_items'       => __('Search Orders', 'wp-production-manager'),
+            'parent_item_colon'  => __('Parent Order:', 'wp-production-manager'),
+            'not_found'          => __('No orders found.', 'wp-production-manager'),
             'not_found_in_trash' => __('No orders found in Trash.', 'wp-production-manager'),
         );
 
         $args = array(
-            'labels' => $labels,
-            'description' => __('Production Order', 'wp-production-order'),
-            'public' => true,
-            'publicly_queryable' => true,
-            'show_in_nav_menus' => true,
-            'show_ui' => true,
-            'show_in_menu' => true,
-            'query_var' => true,
-            'has_archive' => true,
-            'hierarchical' => false,
-            'rewrite' => array('slug' => 'pm_production_order'),
-            'supports' => array('title', 'editor', 'thumbnail', 'custom-fields'),
-            'can_export' => true,
-            'capability_type' => 'post',
-            'menu_position' => 22,
-            'menu_icon' => 'dashicons-admin-generic',
-            'rest_base' => 'pm_production_order',
+            'labels'                => $labels,
+            'description'           => __('Production Order', 'wp-production-order'),
+            'public'                => true,
+            'publicly_queryable'    => true,
+            'show_in_nav_menus'     => true,
+            'show_ui'               => true,
+            'show_in_menu'          => true,
+            'query_var'             => true,
+            'has_archive'           => true,
+            'hierarchical'          => false,
+            'rewrite'               => array('slug' => 'pm_production_order'),
+            'supports'              => array('title', 'editor', 'thumbnail', 'custom-fields'),
+            'can_export'            => true,
+            'capability_type'       => 'post',
+            'menu_position'         => 22,
+            'menu_icon'             => 'dashicons-admin-generic',
+            'rest_base'             => 'pm_production_order',
             'rest_controller_class' => 'WP_REST_Posts_Controller',
         );
 
         register_post_type('pm_production_order', $args);
+    }
+
+    public function filter_woocommerce_coupon_is_valid($is_valid, $coupon) {
+        // Get meta
+        $customer_user_ids    = get_option('pm_settings_allowed_users');
+        $restrict_this_coupon = $coupon->get_meta('pm_restrict_users');
+
+        if (! empty($customer_user_ids) && $restrict_this_coupon == 'true') {
+            $user_id = get_current_user_id();
+
+            if (! in_array($user_id, $customer_user_ids)) {
+                $is_valid = false;
+            }
+        }
+
+        return $is_valid;
     }
 
     /**
