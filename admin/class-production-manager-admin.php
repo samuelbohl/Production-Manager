@@ -123,6 +123,11 @@ class Production_Manager_Admin {
      * @since 1.0.0
      */
     public function add_column_content($column_name, $post_id) {
+        $post_type = get_post_type($post_id);
+        if ($post_type != 'pm_production_order') {
+            return;
+        }
+
         if ($column_name == 'pm_status') {
             $post_status = get_field('pm_status', $post_id);
             if ($post_status) {
