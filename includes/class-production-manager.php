@@ -123,6 +123,13 @@ class Production_Manager {
          */
         require_once plugin_dir_path(dirname(__FILE__)) . 'public/class-production-manager-public.php';
 
+        /**
+         * All ACF Fields used by this plugin.
+         */
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/acf/pm_order_options.php';
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/acf/pm_production_status.php';
+        require_once plugin_dir_path(dirname(__FILE__)) . 'includes/acf/pm_settings.php';
+
         $this->loader = new Production_Manager_Loader();
 
     }
@@ -202,10 +209,10 @@ class Production_Manager {
      */
     public function register_custom_post_types() {
         $labels = array(
-            'name'               => _x('Production Orders', 'post type general name', 'wp-production-manager'),
+            'name'               => _x('Production Manager', 'post type general name', 'wp-production-manager'),
             'singular_name'      => _x('Production Order', 'post type singular name', 'wp-production-manager'),
-            'menu_name'          => _x('Production Orders', 'admin menu', 'wp-production-manager'),
-            'name_admin_bar'     => _x('Production Order', 'add new on admin bar', 'wp-production-manager'),
+            'menu_name'          => _x('Production', 'admin menu', 'wp-production-manager'),
+            'name_admin_bar'     => _x('Production', 'add new on admin bar', 'wp-production-manager'),
             'add_new'            => _x('Add New', 'order', 'wp-production-manager'),
             'add_new_item'       => __('Add New Order', 'wp-production-manager'),
             'new_item'           => __('New Order', 'wp-production-manager'),
@@ -234,7 +241,7 @@ class Production_Manager {
             'can_export'            => true,
             'capability_type'       => 'post',
             'menu_position'         => 22,
-            'menu_icon'             => 'dashicons-admin-generic',
+            'menu_icon'             => 'dashicons-clipboard',
             'rest_base'             => 'pm_production_order',
             'rest_controller_class' => 'WP_REST_Posts_Controller',
         );
@@ -242,8 +249,13 @@ class Production_Manager {
         register_post_type('pm_production_order', $args);
     }
 
+    /**
+     * Restrict with `pm_restrict_users` specified coupons to users configured in the settings.
+     *
+     * @author Samuel Bohl
+     * @since   1.0.0
+     */
     public function filter_woocommerce_coupon_is_valid($is_valid, $coupon) {
-        // Get meta
         $customer_user_ids    = get_option('pm_settings_allowed_users');
         $restrict_this_coupon = $coupon->get_meta('pm_restrict_users');
 

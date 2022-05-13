@@ -1,4 +1,7 @@
-/**
- * All of the CSS for your admin-specific functionality should be
- * included in this file.
- */
+.pm_coupon_code {
+    cursor: pointer;
+}
+
+.pm_coupon_code .fa-paste {
+    margin-right: 0.25rem;
+}
